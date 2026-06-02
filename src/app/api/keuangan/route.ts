@@ -1,23 +1,12 @@
 import { NextResponse } from "next/server";
 import { getKeuangan, addKeuangan, updateKeuangan, deleteKeuangan } from "@/lib/db";
+import { buildKeuanganResponse } from "@/lib/keuangan";
 import { isAdminAuthenticated } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const transaksi = getKeuangan();
-  const pemasukan = transaksi.filter((t) => t.jenis === "pemasukan").reduce((s, t) => s + t.jumlah, 0);
-  const pengeluaran = transaksi.filter((t) => t.jenis === "pengeluaran").reduce((s, t) => s + t.jumlah, 0);
-
-  return NextResponse.json({
-    transaksi,
-    ringkasan: {
-      pemasukan,
-      pengeluaran,
-      saldo: pemasukan - pengeluaran,
-    },
-    updated_at: new Date().toISOString(),
-  });
+  return NextResponse.json(buildKeuanganResponse(getKeuangan()));
 }
 
 export async function POST(request: Request) {

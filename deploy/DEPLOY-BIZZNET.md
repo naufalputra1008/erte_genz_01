@@ -69,9 +69,8 @@ nano .env.local
 ```
 
 **Wajib ubah di production:**
+- `ADMIN_EMAIL` — email admin
 - `ADMIN_PASSWORD_HASH` — hash password admin baru
-- `OTP_MOCK=false`
-- Isi `SMTP_*` untuk OTP email
 
 Generate hash password:
 
@@ -142,7 +141,7 @@ sudo certbot renew      # Perpanjang SSL (auto via cron)
 | Error 502 Bad Gateway | App belum jalan — `pm2 restart portal-rt` |
 | SSL gagal | Pastikan DNS A record sudah benar |
 | Upload foto gagal | Cek permission `public/uploads/kegiatan` |
-| OTP tidak terkirim | Cek SMTP di `.env.local`, set `OTP_MOCK=false` |
+| Login admin gagal | Cek `ADMIN_EMAIL` dan `ADMIN_PASSWORD_HASH` di `.env.local` |
 
 ---
 

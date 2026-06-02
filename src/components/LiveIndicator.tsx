@@ -6,10 +6,10 @@ import { formatTanggalWaktu } from "@/lib/format";
 interface LiveIndicatorProps {
   lastUpdated: Date | null;
   onRefresh?: () => void;
-  loading?: boolean;
+  refreshing?: boolean;
 }
 
-export function LiveIndicator({ lastUpdated, onRefresh, loading }: LiveIndicatorProps) {
+export function LiveIndicator({ lastUpdated, onRefresh, refreshing }: LiveIndicatorProps) {
   return (
     <div className="flex items-center gap-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-1.5">
       <span className="relative flex h-2 w-2">
@@ -26,11 +26,11 @@ export function LiveIndicator({ lastUpdated, onRefresh, loading }: LiveIndicator
       {onRefresh && (
         <button
           onClick={onRefresh}
-          disabled={loading}
+          disabled={refreshing}
           className="ml-1 p-1 rounded-full hover:bg-emerald-100 transition-colors disabled:opacity-50"
           title="Refresh data"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
         </button>
       )}
     </div>

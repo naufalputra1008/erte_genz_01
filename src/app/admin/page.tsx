@@ -1,53 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lock, LogOut, Plus, Trash2, Save, ChevronDown, ChevronUp, Upload, ImageIcon, Pencil, X, Mail, ShieldCheck } from "lucide-react";
+import { Lock, LogOut, Plus, Trash2, Save, ChevronDown, ChevronUp, Upload, ImageIcon, Pencil, X, Mail } from "lucide-react";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { formatFileSize, MAX_FOTO_SIZE } from "@/lib/upload";
 import type { ProfilRT, Kegiatan, KegiatanFoto, Warga, TransaksiKeuangan } from "@/lib/types";
 
 type Tab = "profil" | "kegiatan" | "warga" | "keuangan";
 
-type LoginStep = "credentials" | "otp";
-
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-  const [loginStep, setLoginStep] = useState<LoginStep>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [maskedEmail, setMaskedEmail] = useState("");
-  const [devOtp, setDevOtp] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
   const [tab, setTab] = useState<Tab>("profil");
   const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resendCooldown]);
-
   async function checkAuth() {
     const res = await fetch("/api/auth/check");
     const data = await res.json();
     setAuthenticated(data.authenticated);
-    if (data.pendingOtp) {
-      setLoginStep("otp");
-    }
   }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setInfo("");
-    setDevOtp(null);
     setLoading(true);
 
     const res = await fetch("/api/auth/login", {
@@ -60,78 +41,18 @@ export default function AdminPage() {
     setLoading(false);
 
     if (res.ok) {
-      setLoginStep("otp");
-      setMaskedEmail(data.maskedEmail || "");
-      setInfo(data.message || "Kode OTP telah dikirim ke email Anda");
-      if (data.devOtp) setDevOtp(data.devOtp);
+      setAuthenticated(true);
       setPassword("");
-      setResendCooldown(60);
     } else {
       setError(data.error || "Login gagal. Periksa email dan password.");
     }
   }
 
-  async function handleVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setInfo("");
-    setLoading(true);
-
-    const res = await fetch("/api/auth/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ otp }),
-    });
-
-    const data = await res.json();
-    setLoading(false);
-
-    if (res.ok) {
-      setAuthenticated(true);
-      setOtp("");
-      setDevOtp(null);
-      setLoginStep("credentials");
-    } else {
-      setError(data.error || "Kode OTP tidak valid");
-    }
-  }
-
-  async function handleResendOtp() {
-    if (resendCooldown > 0) return;
-    setError("");
-    setInfo("");
-    setDevOtp(null);
-    setLoading(true);
-
-    const res = await fetch("/api/auth/resend-otp", { method: "POST" });
-    const data = await res.json();
-    setLoading(false);
-
-    if (res.ok) {
-      setInfo(data.message || "Kode OTP baru telah dikirim");
-      if (data.devOtp) setDevOtp(data.devOtp);
-      setResendCooldown(60);
-    } else {
-      setError(data.error || "Gagal mengirim ulang OTP");
-    }
-  }
-
-  async function handleBackToLogin() {
-    await fetch("/api/auth/login", { method: "DELETE" });
-    setLoginStep("credentials");
-    setOtp("");
-    setError("");
-    setInfo("");
-    setDevOtp(null);
-  }
-
   async function handleLogout() {
     await fetch("/api/auth", { method: "DELETE" });
     setAuthenticated(false);
-    setLoginStep("credentials");
     setEmail("");
     setPassword("");
-    setOtp("");
   }
 
   if (authenticated === null) {
@@ -148,120 +69,47 @@ export default function AdminPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
           <div className="text-center mb-6">
             <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-              {loginStep === "credentials" ? (
-                <Lock className="h-7 w-7 text-emerald-600" />
-              ) : (
-                <ShieldCheck className="h-7 w-7 text-emerald-600" />
-              )}
+              <Lock className="h-7 w-7 text-emerald-600" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Panel Admin RT</h1>
-            <p className="text-slate-500 mt-1">
-              {loginStep === "credentials"
-                ? "Masuk dengan email dan password"
-                : "Verifikasi kode OTP"}
-            </p>
+            <p className="text-slate-500 mt-1">Masuk dengan email dan password</p>
           </div>
 
-          {loginStep === "credentials" ? (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@tamanbalaraja.rt"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password admin"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   required
                 />
               </div>
-              {error && <p className="text-sm text-rose-600">{error}</p>}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? "Memverifikasi..." : "Lanjut ke Verifikasi OTP"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
-                <p>Kode OTP dikirim ke email <strong>{maskedEmail || email || "****"}</strong></p>
-                <p className="text-emerald-600 mt-1">Berlaku 5 menit</p>
-              </div>
-
-              {devOtp && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
-                  <strong>Dev mode:</strong> OTP = <code className="font-mono font-bold">{devOtp}</code>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Kode OTP (6 digit)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  required
-                />
-              </div>
-
-              {error && <p className="text-sm text-rose-600">{error}</p>}
-              {info && !error && <p className="text-sm text-emerald-600">{info}</p>}
-
-              <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? "Memverifikasi..." : "Verifikasi & Masuk"}
-              </button>
-
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  onClick={handleBackToLogin}
-                  className="text-slate-500 hover:text-slate-700"
-                >
-                  ← Kembali ke login
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={loading || resendCooldown > 0}
-                  className="text-emerald-600 hover:text-emerald-700 disabled:text-slate-400"
-                >
-                  {resendCooldown > 0 ? `Kirim ulang (${resendCooldown}s)` : "Kirim ulang OTP"}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {loginStep === "credentials" && (
-            <p className="text-xs text-slate-400 text-center mt-4">
-              Default: admin@tamanbalaraja.rt / AdminRT2026!
-            </p>
-          )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password admin"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                required
+              />
+            </div>
+            {error && <p className="text-sm text-rose-600">{error}</p>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            >
+              {loading ? "Memverifikasi..." : "Masuk"}
+            </button>
+          </form>
         </div>
       </div>
     );

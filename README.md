@@ -9,7 +9,7 @@ Aplikasi web untuk menampilkan informasi RT secara live dan aktual kepada warga.
 - **Visi & Misi** — Profil RT dan pengurus
 - **Data Warga** — Daftar warga dengan pencarian dan filter
 - **Keuangan RT** — Pemasukan, pengeluaran, dan saldo transparan
-- **Panel Admin** — Kelola semua data (dilindungi PIN)
+- **Panel Admin** — Kelola semua data (login email & password)
 - **Live Update** — Data diperbarui otomatis setiap 10 detik
 
 ## Menjalankan
@@ -23,31 +23,25 @@ Buka [http://localhost:3000](http://localhost:3000)
 
 ## Admin
 
-Akses panel admin di `/admin`. Login 2 langkah: **Email + Password**, lalu **OTP via Email**.
-
-### Kredensial default (development)
-
-- Email: `admin@tamanbalaraja.rt`
-- Password: `AdminRT2026!`
+Akses panel admin di `/admin`. Login dengan **Email + Password**.
 
 ### Konfigurasi
 
 ```bash
 cp .env.example .env.local
+# Isi ADMIN_EMAIL dan ADMIN_PASSWORD_HASH (hash bcrypt password admin)
 ```
 
 | Variable | Keterangan |
 |----------|------------|
 | `ADMIN_EMAIL` | Email admin |
 | `ADMIN_PASSWORD_HASH` | Hash bcrypt password |
-| `SMTP_HOST` | Server SMTP (mis. smtp.gmail.com) |
-| `SMTP_PORT` | Port SMTP (biasanya 587) |
-| `SMTP_USER` | Username/email SMTP |
-| `SMTP_PASS` | Password SMTP |
-| `SMTP_FROM` | Alamat pengirim (opsional) |
-| `OTP_MOCK` | `true` = tampilkan OTP di layar tanpa SMTP |
 
-Development: set `OTP_MOCK=true` untuk melihat OTP langsung di halaman login. Production: konfigurasi SMTP agar OTP dikirim ke email admin.
+Generate hash:
+
+```bash
+node -e "console.log(require('bcryptjs').hashSync('password-anda', 10))"
+```
 
 ## Tech Stack
 

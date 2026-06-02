@@ -1,23 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-interface UseLiveDataOptions {
+interface UseLiveDataOptions<T> {
   interval?: number;
   enabled?: boolean;
+  initialData?: T | null;
 }
+
+const DEFAULT_INTERVAL =
+  process.env.NODE_ENV === "development" ? 30_000 : 10_000;
 
 export function useLiveData<T>(
   url: string,
-  options: UseLiveDataOptions = {}
+  options: UseLiveDataOptions<T> = {}
 ) {
-  const { interval = 10000, enabled = true } = options;
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { interval = DEFAULT_INTERVAL, enabled = true, initialData = null } = options;
+  const hasDataRef = useRef(initialData != null);
+  const [data, setData] = useState<T | null>(initialData);
+  const [loading, setLoading] = useState(initialData == null);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(
+    initialData != null ? new Date() : null
+  );
 
   const fetchData = useCallback(async () => {
+    if (hasDataRef.current) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
     try {
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error("Gagal memuat data");
@@ -25,19 +39,23 @@ export function useLiveData<T>(
       setData(json);
       setLastUpdated(new Date());
       setError(null);
+      hasDataRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [url]);
 
   useEffect(() => {
     if (!enabled) return;
-    fetchData();
+    if (!hasDataRef.current) {
+      fetchData();
+    }
     const timer = setInterval(fetchData, interval);
     return () => clearInterval(timer);
   }, [fetchData, interval, enabled]);
 
-  return { data, loading, error, lastUpdated, refresh: fetchData };
+  return { data, loading, refreshing, error, lastUpdated, refresh: fetchData };
 }

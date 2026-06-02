@@ -8,6 +8,7 @@ APP_DIR="/var/www/rtgenz01"
 cd "$APP_DIR"
 
 echo "==> Install dependencies..."
+export CXX=g++-10
 npm ci
 
 echo "==> Build Next.js..."
@@ -17,12 +18,13 @@ echo "==> Siapkan standalone server..."
 rm -rf standalone-release
 mkdir -p standalone-release
 
-cp -r .next/standalone/* standalone-release/
+cp -r .next/standalone/. standalone-release/
 mkdir -p standalone-release/.next
 cp -r .next/static standalone-release/.next/static
 mkdir -p standalone-release/public
 
 # Data & upload persisten di luar release
+mkdir -p standalone-release/public
 mkdir -p data public/uploads/kegiatan
 rm -rf standalone-release/data standalone-release/public/uploads
 ln -sfn "$APP_DIR/data" standalone-release/data
@@ -30,6 +32,13 @@ ln -sfn "$APP_DIR/public/uploads" standalone-release/public/uploads
 
 if [ -f .env.local ]; then
   cp .env.local standalone-release/.env.local
+fi
+
+# Standalone bundles its own better-sqlite3 copy; copy compiled native binary
+if [ -f node_modules/better-sqlite3/build/Release/better_sqlite3.node ]; then
+  mkdir -p standalone-release/node_modules/better-sqlite3/build/Release
+  cp node_modules/better-sqlite3/build/Release/better_sqlite3.node \
+    standalone-release/node_modules/better-sqlite3/build/Release/
 fi
 
 echo "==> Restart PM2..."
