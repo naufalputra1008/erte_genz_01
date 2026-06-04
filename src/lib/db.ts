@@ -91,6 +91,21 @@ function migrateDb(database: Database.Database) {
   if (!kegiatanCols.some((c) => c.name === "detail")) {
     database.exec("ALTER TABLE kegiatan ADD COLUMN detail TEXT NOT NULL DEFAULT ''");
   }
+
+  database
+    .prepare(
+      `UPDATE profil_rt
+       SET kecamatan = ?, kota = ?, updated_at = ?
+       WHERE kelurahan = ? AND kecamatan = ? AND kota = ?`
+    )
+    .run(
+      "Parahu",
+      "Sukamulya, Kabupaten Tangerang",
+      new Date().toISOString(),
+      "Taman Balaraja",
+      "Balaraja",
+      "Kabupaten Tangerang"
+    );
 }
 
 function seedDb(database: Database.Database) {
@@ -103,8 +118,8 @@ function seedDb(database: Database.Database) {
     "RT 01 Taman Balaraja",
     "RW 01",
     "Taman Balaraja",
-    "Balaraja",
-    "Kabupaten Tangerang",
+    "Parahu",
+    "Sukamulya, Kabupaten Tangerang",
     "Bapak H. Jasmani",
     "Ibu Siti Rahayu",
     "Bapak Budi Santoso",
@@ -319,12 +334,55 @@ export function getKeuangan(): TransaksiKeuangan[] {
 }
 
 export function addKeuangan(data: Omit<TransaksiKeuangan, "id" | "created_at">): TransaksiKeuangan {
-  const now = new Date().toISOString();
-  const result = getDb().prepare(
-    "INSERT INTO keuangan (jenis, kategori, deskripsi, jumlah, tanggal, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-  ).run(data.jenis, data.kategori, data.deskripsi, data.jumlah, data.tanggal, now);
+  const [created] = addKeuanganBatch([data]);
+  return created;
+}
 
-  return getDb().prepare("SELECT * FROM keuangan WHERE id = ?").get(result.lastInsertRowid) as TransaksiKeuangan;
+export function addKeuanganBatch(
+  items: Omit<TransaksiKeuangan, "id" | "created_at">[]
+): TransaksiKeuangan[] {
+  if (items.length === 0) return [];
+
+  const database = getDb();
+  const now = new Date().toISOString();
+  const insert = database.prepare(
+    "INSERT INTO keuangan (jenis, kategori, deskripsi, jumlah, tanggal, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+  );
+
+  const insertMany = database.transaction((rows: typeof items) => {
+    const ids: number[] = [];
+    for (const row of rows) {
+      const result = insert.run(
+        row.jenis,
+        row.kategori,
+        row.deskripsi,
+        row.jumlah,
+        row.tanggal,
+        now
+      );
+      ids.push(Number(result.lastInsertRowid));
+    }
+    return ids;
+  });
+
+  const ids = insertMany(items);
+  const select = database.prepare("SELECT * FROM keuangan WHERE id = ?");
+  return ids.map((id) => select.get(id) as TransaksiKeuangan);
+}
+
+export function updateKeuanganBatch(
+  items: { id: number; data: Omit<TransaksiKeuangan, "id" | "created_at"> }[]
+): { updated: TransaksiKeuangan[]; errors: { id: number; message: string }[] } {
+  const updated: TransaksiKeuangan[] = [];
+  const errors: { id: number; message: string }[] = [];
+
+  for (const item of items) {
+    const result = updateKeuangan(item.id, item.data);
+    if (result) updated.push(result);
+    else errors.push({ id: item.id, message: "Transaksi tidak ditemukan" });
+  }
+
+  return { updated, errors };
 }
 
 export function updateKeuangan(
@@ -354,7 +412,7 @@ export function getDashboard(): DashboardData {
   const pengeluaran = getDb().prepare("SELECT COALESCE(SUM(jumlah), 0) as total FROM keuangan WHERE jenis = 'pengeluaran'").get() as { total: number };
   const kegiatanAktif = getDb().prepare("SELECT COUNT(*) as c FROM kegiatan WHERE status IN ('rencana', 'berlangsung')").get() as { c: number };
   const kegiatanTerbaru = getDb().prepare("SELECT * FROM kegiatan ORDER BY tanggal DESC LIMIT 3").all() as Kegiatan[];
-  const transaksiTerbaru = getDb().prepare("SELECT * FROM keuangan ORDER BY tanggal DESC, id DESC LIMIT 5").all() as TransaksiKeuangan[];
+  const transaksiTerbaru = getDb().prepare("SELECT * FROM keuangan ORDER BY tanggal DESC, id DESC LIMIT 2").all() as TransaksiKeuangan[];
 
   return {
     profil,

@@ -1,9 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lock, LogOut, Plus, Trash2, Save, ChevronDown, ChevronUp, Upload, ImageIcon, Pencil, X, Mail } from "lucide-react";
+import {
+  Lock,
+  LogOut,
+  Plus,
+  Trash2,
+  Save,
+  ChevronDown,
+  ChevronUp,
+  Upload,
+  ImageIcon,
+  Pencil,
+  X,
+  Mail,
+  FileSpreadsheet,
+  Download,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+} from "lucide-react";
 import AdminKeuanganGate from "./AdminKeuanganGate";
+import { StatCard } from "@/components/StatCard";
 import { formatRupiah, formatTanggal } from "@/lib/format";
+import type { KeuanganResponse } from "@/lib/keuangan";
 import { formatFileSize, MAX_FOTO_SIZE } from "@/lib/upload";
 import type { ProfilRT, Kegiatan, KegiatanFoto, Warga, TransaksiKeuangan } from "@/lib/types";
 
@@ -197,7 +217,6 @@ function ProfilForm() {
 
   const fields: { key: keyof ProfilRT; label: string; multiline?: boolean }[] = [
     { key: "nama_rt", label: "Nama RT" },
-    { key: "nama_rw", label: "Nama RW" },
     { key: "kelurahan", label: "Kelurahan" },
     { key: "kecamatan", label: "Kecamatan" },
     { key: "kota", label: "Kota" },
@@ -679,6 +698,7 @@ function KeuanganAdminSection() {
 
 function KeuanganForm() {
   const [items, setItems] = useState<TransaksiKeuangan[]>([]);
+  const [ringkasan, setRingkasan] = useState<KeuanganResponse["ringkasan"] | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
     jenis: "pemasukan" as TransaksiKeuangan["jenis"],
@@ -689,12 +709,32 @@ function KeuanganForm() {
   });
   const [form, setForm] = useState({ jenis: "pemasukan" as const, kategori: "", deskripsi: "", jumlah: "", tanggal: "" });
   const [saved, setSaved] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    failed: number;
+    errors: { row: number; message: string }[];
+  } | null>(null);
+  const [importError, setImportError] = useState("");
+  const [updateFile, setUpdateFile] = useState<File | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateResult, setUpdateResult] = useState<{
+    updated: number;
+    failed: number;
+    errors: { row: number; message: string }[];
+  } | null>(null);
+  const [updateError, setUpdateError] = useState("");
 
   async function load() {
     const res = await fetch("/api/admin/keuangan");
-    const data = await res.json();
+    const data: KeuanganResponse = await res.json();
     setItems(data.transaksi);
+    setRingkasan(data.ringkasan);
   }
+
+  const pemasukan = items.filter((t) => t.jenis === "pemasukan");
+  const pengeluaran = items.filter((t) => t.jenis === "pengeluaran");
 
   useEffect(() => { load(); }, []);
 
@@ -744,8 +784,313 @@ function KeuanganForm() {
     load();
   }
 
+  async function downloadCsv(url: string, filename: string) {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(blobUrl);
+  }
+
+  async function handleDownloadAddTemplate() {
+    await downloadCsv("/api/admin/keuangan/import/template", "template-import-keuangan.csv");
+  }
+
+  async function handleExportData() {
+    await downloadCsv("/api/admin/keuangan/export", `data-keuangan-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
+
+  async function handleDownloadUpdateTemplate() {
+    await downloadCsv(
+      "/api/admin/keuangan/import/template?mode=update",
+      "template-ubah-keuangan.csv"
+    );
+  }
+
+  async function handleImport(e: React.FormEvent) {
+    e.preventDefault();
+    if (!importFile) return;
+
+    setImportError("");
+    setImportResult(null);
+    setImportLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    const res = await fetch("/api/admin/keuangan/import", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setImportLoading(false);
+
+    if (!res.ok && !data.imported) {
+      setImportError(data.error || data.errors?.[0]?.message || "Import gagal");
+      if (data.errors?.length) setImportResult(data);
+      return;
+    }
+
+    setImportResult(data);
+    setImportFile(null);
+    load();
+  }
+
+  async function handleUpdateImport(e: React.FormEvent) {
+    e.preventDefault();
+    if (!updateFile) return;
+
+    setUpdateError("");
+    setUpdateResult(null);
+    setUpdateLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", updateFile);
+
+    const res = await fetch("/api/admin/keuangan/import/update", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setUpdateLoading(false);
+
+    if (!res.ok && !data.updated) {
+      setUpdateError(data.error || data.errors?.[0]?.message || "Import ubah data gagal");
+      if (data.errors?.length) setUpdateResult(data);
+      return;
+    }
+
+    setUpdateResult(data);
+    setUpdateFile(null);
+    load();
+  }
+
   return (
     <div className="space-y-6">
+      {ringkasan && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            title="Total Pemasukan"
+            value={formatRupiah(ringkasan.pemasukan)}
+            subtitle={`${pemasukan.length} transaksi`}
+            icon={TrendingUp}
+            color="emerald"
+          />
+          <StatCard
+            title="Total Pengeluaran"
+            value={formatRupiah(ringkasan.pengeluaran)}
+            subtitle={`${pengeluaran.length} transaksi`}
+            icon={TrendingDown}
+            color="rose"
+          />
+          <StatCard
+            title="Saldo Saat Ini"
+            value={formatRupiah(ringkasan.saldo)}
+            icon={Wallet}
+            color="amber"
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 bg-emerald-50">
+            <h3 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4" />
+              Preview Pemasukan
+            </h3>
+          </div>
+          <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+            {pemasukan.map((t) => (
+              <div key={t.id} className="px-5 py-3 flex justify-between items-start gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 text-sm truncate">{t.deskripsi}</p>
+                  <p className="text-xs text-slate-500">{t.kategori} · {formatTanggal(t.tanggal)}</p>
+                </div>
+                <p className="font-semibold text-emerald-600 text-sm whitespace-nowrap">+{formatRupiah(t.jumlah)}</p>
+              </div>
+            ))}
+            {pemasukan.length === 0 && (
+              <p className="text-center text-slate-500 text-sm py-8">Belum ada pemasukan.</p>
+            )}
+          </div>
+        </section>
+
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100 bg-rose-50">
+            <h3 className="font-semibold text-rose-800 flex items-center gap-2 text-sm">
+              <TrendingDown className="h-4 w-4" />
+              Preview Pengeluaran
+            </h3>
+          </div>
+          <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+            {pengeluaran.map((t) => (
+              <div key={t.id} className="px-5 py-3 flex justify-between items-start gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-900 text-sm truncate">{t.deskripsi}</p>
+                  <p className="text-xs text-slate-500">{t.kategori} · {formatTanggal(t.tanggal)}</p>
+                </div>
+                <p className="font-semibold text-rose-600 text-sm whitespace-nowrap">-{formatRupiah(t.jumlah)}</p>
+              </div>
+            ))}
+            {pengeluaran.length === 0 && (
+              <p className="text-center text-slate-500 text-sm py-8">Belum ada pengeluaran.</p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <form
+          onSubmit={handleImport}
+          className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-100">
+              <FileSpreadsheet className="h-5 w-5 text-amber-700" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-slate-900">Import Tambah Data</h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Tambah transaksi pemasukan & pengeluaran baru dari CSV/Excel.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500">
+            Kolom: <span className="font-mono">jenis, kategori, deskripsi, jumlah, tanggal</span>
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-100 file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadAddTemplate}
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                <Download className="h-4 w-4" />
+                Template
+              </button>
+              <button
+                type="submit"
+                disabled={!importFile || importLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-sm font-medium hover:bg-amber-700 disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {importLoading ? "Mengimpor..." : "Import Tambah"}
+              </button>
+            </div>
+          </div>
+
+          {importError && <p className="text-sm text-rose-600">{importError}</p>}
+          {importResult && (
+            <div className="text-sm rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-1">
+              <p className="text-emerald-700 font-medium">
+                {importResult.imported} transaksi berhasil ditambah.
+              </p>
+              {importResult.failed > 0 && (
+                <p className="text-amber-700">{importResult.failed} baris gagal</p>
+              )}
+              {importResult.errors.slice(0, 3).map((err) => (
+                <p key={`add-${err.row}-${err.message}`} className="text-slate-600 text-xs">
+                  Baris {err.row}: {err.message}
+                </p>
+              ))}
+            </div>
+          )}
+        </form>
+
+        <form
+          onSubmit={handleUpdateImport}
+          className="bg-white rounded-2xl border border-blue-200 p-6 space-y-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-blue-100">
+              <FileSpreadsheet className="h-5 w-5 text-blue-700" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-slate-900">Import Ubah Data</h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Perbarui transaksi yang sudah ada. Wajib ada kolom <span className="font-mono">id</span>.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500">
+            Kolom: <span className="font-mono">id, jenis, kategori, deskripsi, jumlah, tanggal</span>
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={(e) => setUpdateFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-100 file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleExportData}
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                <Download className="h-4 w-4" />
+                Export Data
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadUpdateTemplate}
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                <Download className="h-4 w-4" />
+                Template
+              </button>
+              <button
+                type="submit"
+                disabled={!updateFile || updateLoading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4" />
+                {updateLoading ? "Memproses..." : "Import Ubah"}
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-blue-600">
+            Tip: klik <strong>Export Data</strong> untuk unduh semua transaksi beserta ID, edit di Excel, lalu upload kembali.
+          </p>
+
+          {updateError && <p className="text-sm text-rose-600">{updateError}</p>}
+          {updateResult && (
+            <div className="text-sm rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-1">
+              <p className="text-emerald-700 font-medium">
+                {updateResult.updated} transaksi berhasil diubah.
+              </p>
+              {updateResult.failed > 0 && (
+                <p className="text-amber-700">{updateResult.failed} baris gagal</p>
+              )}
+              {updateResult.errors.slice(0, 3).map((err) => (
+                <p key={`upd-${err.row}-${err.message}`} className="text-slate-600 text-xs">
+                  {err.row > 0 ? `Baris ${err.row}: ` : ""}
+                  {err.message}
+                </p>
+              ))}
+            </div>
+          )}
+        </form>
+      </div>
+
       <form onSubmit={handleAdd} className="bg-white rounded-2xl border border-slate-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <select value={form.jenis} onChange={(e) => setForm({ ...form, jenis: e.target.value as "pemasukan" })} className="px-3 py-2 rounded-xl border border-slate-200">
           <option value="pemasukan">Pemasukan</option>
@@ -760,7 +1105,10 @@ function KeuanganForm() {
         </button>
       </form>
       {saved && <p className="text-sm text-emerald-600 font-medium">Perubahan keuangan berhasil disimpan.</p>}
-      <div className="space-y-2">
+
+      <div>
+        <h3 className="font-semibold text-slate-900 mb-3">Kelola Semua Transaksi</h3>
+        <div className="space-y-2">
         {items.map((t) => (
           editingId === t.id ? (
             <div key={t.id} className="bg-white rounded-xl border border-emerald-200 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -800,6 +1148,7 @@ function KeuanganForm() {
             </div>
           )
         ))}
+        </div>
       </div>
     </div>
   );

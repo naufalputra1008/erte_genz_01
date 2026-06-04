@@ -1,20 +1,9 @@
 import { NextResponse } from "next/server";
 import { getKeuangan, addKeuangan, updateKeuangan, deleteKeuangan } from "@/lib/db";
 import { buildKeuanganResponse } from "@/lib/keuangan";
-import { isAdminAuthenticated } from "@/lib/auth";
-import { isKeuanganAccessGranted } from "@/lib/keuangan-auth";
+import { requireAdminKeuanganAccess } from "@/lib/admin-keuangan-guard";
 
 export const dynamic = "force-dynamic";
-
-async function requireAdminKeuanganAccess() {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (!(await isKeuanganAccessGranted())) {
-    return NextResponse.json({ error: "Password keuangan diperlukan" }, { status: 403 });
-  }
-  return null;
-}
 
 export async function GET() {
   const denied = await requireAdminKeuanganAccess();

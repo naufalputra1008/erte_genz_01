@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Home, Calendar, Target, Users, Wallet } from "lucide-react";
+import { KegiatanNotifyBell } from "@/components/KegiatanNotifyBell";
 
 const navItems = [
   { href: "/", label: "Beranda", icon: Home },
@@ -30,7 +31,8 @@ export function Navbar() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-2">
+          <nav className="flex items-center gap-1">
             {navItems.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -42,9 +44,12 @@ export function Navbar() {
               </Link>
             ))}
           </nav>
+          <KegiatanNotifyBell />
+          </div>
         </div>
 
-        <nav className="md:hidden flex gap-1 overflow-x-auto pb-3 -mx-1 scrollbar-hide">
+        <nav className="md:hidden flex gap-1 overflow-x-auto pb-3 -mx-1 scrollbar-hide items-center">
+          <KegiatanNotifyBell />
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}

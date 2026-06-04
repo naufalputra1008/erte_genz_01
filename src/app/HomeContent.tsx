@@ -41,15 +41,10 @@ export default function HomeContent({ initialData }: { initialData: DashboardDat
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <p className="text-emerald-600 font-semibold text-sm uppercase tracking-wide">
-            {data.profil.nama_rw} · {data.profil.kelurahan}
-          </p>
-          <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+          <h1 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 whitespace-nowrap">
             Selamat Datang, Warga {data.profil.nama_rt}
           </h1>
-          <p className="text-slate-500 mt-2">
-            Ketua RT: {data.profil.ketua} · {data.profil.kelurahan}
-          </p>
+          <p className="text-slate-500 mt-2">Ketua RT: {data.profil.ketua}</p>
         </div>
         <LiveIndicator lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
       </div>

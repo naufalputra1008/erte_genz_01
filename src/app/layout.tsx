@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { KegiatanNotifications } from "@/components/KegiatanNotifications";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-slate-50">
+        <KegiatanNotifications />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

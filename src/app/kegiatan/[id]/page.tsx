@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getKegiatanById } from "@/lib/db";
 import KegiatanDetailContent from "./KegiatanDetailContent";
 
+export const dynamic = "force-dynamic";
+
 export default async function KegiatanDetailPage({
   params,
 }: {

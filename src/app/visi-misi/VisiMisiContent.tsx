@@ -36,8 +36,7 @@ export default function VisiMisiContent({ initialData }: { initialData: ProfilRT
       </PageHeader>
 
       <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 sm:p-8 text-white mb-6 shadow-lg">
-        <p className="text-emerald-100 text-sm font-medium uppercase tracking-wide">{data.nama_rw}</p>
-        <h2 className="text-3xl font-bold mt-1">{data.nama_rt}</h2>
+        <h2 className="text-3xl font-bold">{data.nama_rt}</h2>
         <p className="text-emerald-100 mt-2">
           {data.kelurahan}, {data.kecamatan}, {data.kota}
         </p>

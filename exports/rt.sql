@@ -14,7 +14,7 @@ CREATE TABLE profil_rt (
       misi TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
-INSERT INTO profil_rt VALUES(1,'RT 01 Taman Balaraja','RW 01','Taman Balaraja','Balaraja','Kabupaten Tangerang','Bapak H. Jasmani','Imam Ahmad Ridho','Naufal Putra','Menjadi RT yang harmonis, transparan, dan peduli terhadap seluruh warga dengan semangat gotong royong.',replace('1. Meningkatkan keharmonisan antarwarga\n2. Mengelola keuangan RT secara transparan\n3. Mengadakan kegiatan sosial rutin\n4. Menjaga keamanan dan ketertiban lingkungan\n5. Mendorong partisipasi aktif seluruh warga','\n',char(10)),'2026-05-30T08:16:12.822Z');
+INSERT INTO profil_rt VALUES(1,'RT 01 Taman Balaraja','RW 01','Taman Balaraja','Parahu','Sukamulya, Kabupaten Tangerang','Bapak H. Jasmani','Imam Ahmad Ridho','Naufal Putra','Menjadi RT yang harmonis, transparan, dan peduli terhadap seluruh warga dengan semangat gotong royong.',replace('1. Meningkatkan keharmonisan antarwarga\n2. Mengelola keuangan RT secara transparan\n3. Mengadakan kegiatan sosial rutin\n4. Menjaga keamanan dan ketertiban lingkungan\n5. Mendorong partisipasi aktif seluruh warga','\n',char(10)),'2026-05-30T08:16:12.822Z');
 CREATE TABLE kegiatan (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       judul TEXT NOT NULL,
