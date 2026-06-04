@@ -43,6 +43,8 @@ Generate hash:
 node -e "console.log(require('bcryptjs').hashSync('password-anda', 10))"
 ```
 
+Di `.env.local`, escape setiap `$` menjadi `\$` pada hash (Next.js memproses `$` sebagai variabel).
+
 ## Tech Stack
 
 - Next.js 16 + React 19
