@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { getAdminEnv } from "./admin-env";
 
 export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 10);
@@ -9,10 +10,7 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 export function getAdminCredentials(): { email: string; passwordHash: string } | null {
-  const email = process.env.ADMIN_EMAIL;
-  const passwordHash = process.env.ADMIN_PASSWORD_HASH;
-  if (!email || !passwordHash) return null;
-  return { email: email.toLowerCase(), passwordHash };
+  return getAdminEnv();
 }
 
 export function isAdminConfigured(): boolean {

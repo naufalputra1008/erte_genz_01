@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { isAdminConfigured, verifyAdminCredentials } from "@/lib/password";
+import bcrypt from "bcryptjs";
 import { createAndSetAdminSession } from "@/lib/auth";
+import { getAdminEnv } from "@/lib/admin-env";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
@@ -9,14 +12,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email dan password wajib diisi" }, { status: 400 });
   }
 
-  if (!isAdminConfigured()) {
+  const admin = getAdminEnv();
+  if (!admin) {
     return NextResponse.json(
       { error: "Admin belum dikonfigurasi. Atur ADMIN_EMAIL dan ADMIN_PASSWORD_HASH di .env.local" },
       { status: 503 }
     );
   }
 
-  if (!verifyAdminCredentials(email, password)) {
+  if (email.toLowerCase() !== admin.email || !bcrypt.compareSync(password, admin.passwordHash)) {
     return NextResponse.json({ error: "Email atau password salah" }, { status: 401 });
   }
 

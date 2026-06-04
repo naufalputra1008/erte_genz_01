@@ -12,6 +12,7 @@ export CXX=g++-10
 npm ci
 
 echo "==> Build Next.js..."
+rm -rf standalone-release
 npm run build
 
 echo "==> Siapkan standalone server..."
