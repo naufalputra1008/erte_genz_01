@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portal RT — Informasi Warga",
-  description: "Portal informasi kegiatan, visi misi, data warga, dan keuangan RT secara live dan aktual",
+  title: "Info Warga 01 Taman Balaraja",
+  description: "Informasi kegiatan, visi misi, data warga, dan keuangan RT 01 Taman Balaraja secara live dan aktual",
 };
 
 export default function RootLayout({

@@ -44,7 +44,7 @@ export default function HomeContent({ initialData }: { initialData: DashboardDat
           <p className="text-emerald-600 font-semibold text-sm uppercase tracking-wide">
             {data.profil.nama_rw} · {data.profil.kelurahan}
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mt-1">
+          <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mt-1 whitespace-nowrap">
             Selamat Datang, Warga {data.profil.nama_rt}
           </h1>
           <p className="text-slate-500 mt-2">

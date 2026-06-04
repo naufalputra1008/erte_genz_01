@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy / update aplikasi Portal RT di VPS
+# Deploy / update aplikasi Info Warga 01 Taman Balaraja di VPS
 # Jalankan dari /var/www/rtgenz01: bash deploy/deploy.sh
 
 set -euo pipefail

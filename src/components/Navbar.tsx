@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Home, Calendar, Target, Users, Wallet } from "lucide-react";
 
 const navItems = [
@@ -15,12 +16,17 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-shadow">
-              RT
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Logo Info Warga 01 Taman Balaraja"
+              width={40}
+              height={40}
+              className="w-10 h-10 rounded-xl object-cover shadow-md group-hover:shadow-lg transition-shadow"
+              priority
+            />
             <div>
-              <p className="font-bold text-slate-900 leading-tight">Portal RT</p>
-              <p className="text-xs text-slate-500">Informasi Warga</p>
+              <p className="font-bold text-slate-900 leading-tight">Info Warga 01 Taman Balaraja</p>
+              <p className="text-xs text-slate-500">RT 01 Taman Balaraja</p>
             </div>
           </Link>
 

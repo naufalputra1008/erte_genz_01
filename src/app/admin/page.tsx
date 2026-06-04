@@ -140,7 +140,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Panel Admin RT</h1>
-          <p className="text-slate-500 text-sm">Kelola data portal warga</p>
+          <p className="text-slate-500 text-sm">Kelola data Info Warga 01 Taman Balaraja</p>
         </div>
         <button
           onClick={handleLogout}
