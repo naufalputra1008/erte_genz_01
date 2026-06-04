@@ -38,4 +38,4 @@ ssh "${SSH_OPTS[@]}" "${VPS_USER}@${VPS_HOST}" \
 
 echo ""
 echo "Deploy selesai: https://rtgenz01tamanbalaraja.id"
-echo "Pastikan .env.local di VPS berisi ADMIN_EMAIL dan ADMIN_PASSWORD_HASH (escape \$ pada hash)."
+echo "Pastikan .env.local di VPS berisi ADMIN_EMAIL, ADMIN_PASSWORD_HASH, dan KEUANGAN_PASSWORD_HASH (escape \$ pada hash)."

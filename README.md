@@ -8,7 +8,7 @@ Aplikasi web untuk menampilkan informasi RT secara live dan aktual kepada warga.
 - **Kegiatan RT** — Jadwal dan informasi kegiatan
 - **Visi & Misi** — Profil RT dan pengurus
 - **Data Warga** — Daftar warga dengan pencarian dan filter
-- **Keuangan RT** — Pemasukan, pengeluaran, dan saldo transparan
+- **Keuangan RT** — Pemasukan, pengeluaran, dan saldo transparan (publik)
 - **Panel Admin** — Kelola semua data (login email & password)
 - **Live Update** — Data diperbarui otomatis setiap 10 detik
 
@@ -44,6 +44,18 @@ node -e "console.log(require('bcryptjs').hashSync('password-anda', 10))"
 ```
 
 Di `.env.local`, escape setiap `$` menjadi `\$` pada hash (Next.js memproses `$` sebagai variabel).
+
+### Password kelola keuangan (admin)
+
+Di panel admin, tab **Keuangan** memerlukan **password keuangan** terpisah dari login admin. Password harus dimasukkan lagi setiap kali keluar dari tab Keuangan (pindah tab lain atau logout).
+
+| Variable | Keterangan |
+|----------|------------|
+| `KEUANGAN_PASSWORD_HASH` | Hash bcrypt password kelola keuangan di admin |
+
+```bash
+node -e "console.log(require('bcryptjs').hashSync('password-keuangan-anda', 10))"
+```
 
 ## Tech Stack
 

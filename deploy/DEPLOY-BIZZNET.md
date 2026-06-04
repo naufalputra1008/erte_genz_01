@@ -71,6 +71,7 @@ nano .env.local
 **Wajib ubah di production:**
 - `ADMIN_EMAIL` — email admin
 - `ADMIN_PASSWORD_HASH` — hash password admin baru
+- `KEUANGAN_PASSWORD_HASH` — hash password khusus akses `/keuangan` (berbeda dari admin)
 
 Generate hash password:
 

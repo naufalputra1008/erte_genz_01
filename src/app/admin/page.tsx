@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Lock, LogOut, Plus, Trash2, Save, ChevronDown, ChevronUp, Upload, ImageIcon, Pencil, X, Mail } from "lucide-react";
+import AdminKeuanganGate from "./AdminKeuanganGate";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { formatFileSize, MAX_FOTO_SIZE } from "@/lib/upload";
 import type { ProfilRT, Kegiatan, KegiatanFoto, Warga, TransaksiKeuangan } from "@/lib/types";
@@ -48,7 +49,19 @@ export default function AdminPage() {
     }
   }
 
+  async function clearKeuanganAccess() {
+    await fetch("/api/keuangan/access", { method: "DELETE" });
+  }
+
+  async function handleTabChange(next: Tab) {
+    if (tab === "keuangan" && next !== "keuangan") {
+      await clearKeuanganAccess();
+    }
+    setTab(next);
+  }
+
   async function handleLogout() {
+    await clearKeuanganAccess();
     await fetch("/api/auth", { method: "DELETE" });
     setAuthenticated(false);
     setEmail("");
@@ -142,7 +155,7 @@ export default function AdminPage() {
         {tabs.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => handleTabChange(t.id)}
             className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
               tab === t.id ? "bg-emerald-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
@@ -155,7 +168,7 @@ export default function AdminPage() {
       {tab === "profil" && <ProfilForm />}
       {tab === "kegiatan" && <KegiatanForm />}
       {tab === "warga" && <WargaForm />}
-      {tab === "keuangan" && <KeuanganForm />}
+      {tab === "keuangan" && <KeuanganAdminSection />}
     </div>
   );
 }
@@ -639,6 +652,31 @@ function WargaForm() {
   );
 }
 
+function KeuanganAdminSection() {
+  const [unlocked, setUnlocked] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/keuangan/access")
+      .then((r) => r.json())
+      .then((data) => setUnlocked(!!data.granted))
+      .catch(() => setUnlocked(false));
+  }, []);
+
+  if (unlocked === null) {
+    return (
+      <div className="py-12 text-center">
+        <div className="animate-pulse h-8 bg-slate-200 rounded w-1/3 mx-auto" />
+      </div>
+    );
+  }
+
+  if (!unlocked) {
+    return <AdminKeuanganGate onUnlocked={() => setUnlocked(true)} />;
+  }
+
+  return <KeuanganForm />;
+}
+
 function KeuanganForm() {
   const [items, setItems] = useState<TransaksiKeuangan[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -653,7 +691,7 @@ function KeuanganForm() {
   const [saved, setSaved] = useState(false);
 
   async function load() {
-    const res = await fetch("/api/keuangan");
+    const res = await fetch("/api/admin/keuangan");
     const data = await res.json();
     setItems(data.transaksi);
   }
@@ -662,7 +700,7 @@ function KeuanganForm() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    await fetch("/api/keuangan", {
+    await fetch("/api/admin/keuangan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...form, jumlah: Number(form.jumlah) }),
@@ -689,7 +727,7 @@ function KeuanganForm() {
   }
 
   async function handleSaveEdit(id: number) {
-    await fetch(`/api/keuangan?id=${id}`, {
+    await fetch(`/api/admin/keuangan?id=${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...editForm, jumlah: Number(editForm.jumlah) }),
@@ -701,7 +739,7 @@ function KeuanganForm() {
   }
 
   async function handleDelete(id: number) {
-    await fetch(`/api/keuangan?id=${id}`, { method: "DELETE" });
+    await fetch(`/api/admin/keuangan?id=${id}`, { method: "DELETE" });
     if (editingId === id) setEditingId(null);
     load();
   }

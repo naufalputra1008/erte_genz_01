@@ -32,13 +32,8 @@ function parseEnvFile(content: string): Record<string, string> {
 
 let cached: Record<string, string> | null = null;
 
-export function getAdminEnv(): { email: string; passwordHash: string } | null {
-  if (cached) {
-    const email = cached["ADMIN_EMAIL"];
-    const passwordHash = cached["ADMIN_PASSWORD_HASH"];
-    if (email && passwordHash) return { email: email.toLowerCase(), passwordHash };
-    return null;
-  }
+function loadEnv(): Record<string, string> {
+  if (cached) return cached;
 
   for (const filePath of ENV_PATHS) {
     if (!fs.existsSync(filePath)) continue;
@@ -46,10 +41,21 @@ export function getAdminEnv(): { email: string; passwordHash: string } | null {
     break;
   }
 
-  if (!cached) return null;
+  return cached ?? {};
+}
 
-  const email = cached["ADMIN_EMAIL"];
-  const passwordHash = cached["ADMIN_PASSWORD_HASH"];
+export function getEnvValue(key: string): string | null {
+  const value = loadEnv()[key];
+  return value || null;
+}
+
+export function getAdminEnv(): { email: string; passwordHash: string } | null {
+  const email = getEnvValue("ADMIN_EMAIL");
+  const passwordHash = getEnvValue("ADMIN_PASSWORD_HASH");
   if (!email || !passwordHash) return null;
   return { email: email.toLowerCase(), passwordHash };
+}
+
+export function getKeuanganPasswordHash(): string | null {
+  return getEnvValue("KEUANGAN_PASSWORD_HASH");
 }

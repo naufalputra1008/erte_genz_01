@@ -28,6 +28,12 @@ function initAuthTables(database: Database.Database) {
       expires_at TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS keuangan_access_session (
+      id TEXT PRIMARY KEY,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
   `);
 }
 
@@ -67,7 +73,40 @@ export function deleteAdminSession(sessionId: string): void {
   getDb().prepare("DELETE FROM admin_session WHERE id = ?").run(sessionId);
 }
 
+export function createKeuanganAccessSession(ttlHours = 12) {
+  const id = generateId();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + ttlHours * 60 * 60 * 1000);
+
+  getDb().prepare(`
+    INSERT INTO keuangan_access_session (id, expires_at, created_at)
+    VALUES (?, ?, ?)
+  `).run(id, expiresAt.toISOString(), now.toISOString());
+
+  return { id, expiresAt };
+}
+
+export function validateKeuanganAccessSession(sessionId: string): boolean {
+  const session = getDb()
+    .prepare("SELECT * FROM keuangan_access_session WHERE id = ?")
+    .get(sessionId) as { expires_at: string } | undefined;
+
+  if (!session) return false;
+
+  if (new Date(session.expires_at) < new Date()) {
+    deleteKeuanganAccessSession(sessionId);
+    return false;
+  }
+
+  return true;
+}
+
+export function deleteKeuanganAccessSession(sessionId: string): void {
+  getDb().prepare("DELETE FROM keuangan_access_session WHERE id = ?").run(sessionId);
+}
+
 export function cleanupExpiredSessions(): void {
   const now = new Date().toISOString();
   getDb().prepare("DELETE FROM admin_session WHERE expires_at < ?").run(now);
+  getDb().prepare("DELETE FROM keuangan_access_session WHERE expires_at < ?").run(now);
 }
