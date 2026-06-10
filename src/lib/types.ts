@@ -38,8 +38,20 @@ export interface Warga {
   nama: string;
   alamat: string;
   no_hp: string;
+  no_ktp: string;
   status: "aktif" | "pindah";
   created_at: string;
+}
+
+export type WargaPublic = Omit<Warga, "no_ktp">;
+
+export interface KeuanganAksesLog {
+  id: number;
+  warga_id: number;
+  no_ktp: string;
+  nama_warga: string;
+  session_id: string;
+  accessed_at: string;
 }
 
 export interface TransaksiKeuangan {

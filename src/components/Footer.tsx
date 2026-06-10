@@ -20,10 +20,10 @@ const socialItems = [
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center text-sm text-slate-500">
+    <footer className="mt-auto border-t border-[var(--rt-border)] bg-white">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 text-center text-sm text-slate-500">
         <p>Info Warga 01 Taman Balaraja — Transparansi untuk Warga</p>
-        <p className="mt-1 text-xs">Data diperbarui secara otomatis setiap 10 detik</p>
+        <p className="mt-1 text-xs text-slate-400">Data diperbarui secara otomatis setiap 10 detik</p>
 
         {socialItems.length > 0 && (
           <div className="flex items-center justify-center gap-3 mt-4">
@@ -35,7 +35,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 aria-label={label}
                 title={label}
-                className={`inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors ${className}`}
+                className={`inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[var(--rt-border)] bg-white text-slate-600 transition-colors ${className}`}
               >
                 <Icon className="h-5 w-5" />
               </a>
@@ -43,7 +43,9 @@ export function Footer() {
           </div>
         )}
 
-        <p className="mt-3 text-xs text-slate-400">Created by Naufal Putra</p>
+        <p className="mt-3 text-xs text-slate-400">
+          Created by <span className="text-[#004ac6] font-medium">Naufal Putra</span>
+        </p>
       </div>
     </footer>
   );

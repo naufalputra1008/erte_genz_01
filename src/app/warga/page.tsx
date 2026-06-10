@@ -2,5 +2,6 @@ import { getProfil, getWarga } from "@/lib/db";
 import WargaContent from "./WargaContent";
 
 export default function WargaPage() {
-  return <WargaContent initialWarga={getWarga()} initialProfil={getProfil()} />;
+  const initialWarga = getWarga().map(({ no_ktp: _, ...rest }) => rest);
+  return <WargaContent initialWarga={initialWarga} initialProfil={getProfil()} />;
 }

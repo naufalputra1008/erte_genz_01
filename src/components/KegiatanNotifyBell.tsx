@@ -68,10 +68,10 @@ export function KegiatanNotifyBell() {
       aria-label={label}
       className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
         enabled
-          ? "text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+          ? "text-[#004ac6] bg-blue-50 hover:bg-blue-100"
           : permission === "denied"
             ? "text-slate-400 cursor-not-allowed"
-            : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
+            : "text-slate-600 hover:text-[#004ac6] hover:bg-blue-50"
       }`}
     >
       {enabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}

@@ -53,6 +53,7 @@ function initDb(database: Database.Database) {
       nama TEXT NOT NULL,
       alamat TEXT NOT NULL,
       no_hp TEXT NOT NULL,
+      no_ktp TEXT NOT NULL DEFAULT '',
       status TEXT NOT NULL CHECK (status IN ('aktif', 'pindah')),
       created_at TEXT NOT NULL
     );
@@ -90,6 +91,11 @@ function migrateDb(database: Database.Database) {
   const kegiatanCols = database.pragma("table_info(kegiatan)") as { name: string }[];
   if (!kegiatanCols.some((c) => c.name === "detail")) {
     database.exec("ALTER TABLE kegiatan ADD COLUMN detail TEXT NOT NULL DEFAULT ''");
+  }
+
+  const wargaCols = database.pragma("table_info(warga)") as { name: string }[];
+  if (!wargaCols.some((c) => c.name === "no_ktp")) {
+    database.exec("ALTER TABLE warga ADD COLUMN no_ktp TEXT NOT NULL DEFAULT ''");
   }
 
   database
@@ -143,17 +149,17 @@ function seedDb(database: Database.Database) {
   }
 
   const warga = [
-    ["Ahmad Suryadi", "Jl. Merdeka No. 1", "081234567890", "aktif"],
-    ["Siti Rahayu", "Jl. Merdeka No. 2", "081234567891", "aktif"],
-    ["Budi Santoso", "Jl. Merdeka No. 3", "081234567892", "aktif"],
-    ["Dewi Lestari", "Jl. Merdeka No. 4", "081234567893", "aktif"],
-    ["Eko Prasetyo", "Jl. Merdeka No. 5", "081234567894", "aktif"],
-    ["Fitri Handayani", "Jl. Merdeka No. 6", "081234567895", "aktif"],
-    ["Gunawan Wijaya", "Jl. Merdeka No. 7", "081234567896", "pindah"],
+    ["Ahmad Suryadi", "Jl. Merdeka No. 1", "081234567890", "3201010101010001", "aktif"],
+    ["Siti Rahayu", "Jl. Merdeka No. 2", "081234567891", "3201010202020002", "aktif"],
+    ["Budi Santoso", "Jl. Merdeka No. 3", "081234567892", "3201010303030003", "aktif"],
+    ["Dewi Lestari", "Jl. Merdeka No. 4", "081234567893", "3201010404040004", "aktif"],
+    ["Eko Prasetyo", "Jl. Merdeka No. 5", "081234567894", "3201010505050005", "aktif"],
+    ["Fitri Handayani", "Jl. Merdeka No. 6", "081234567895", "3201010606060006", "aktif"],
+    ["Gunawan Wijaya", "Jl. Merdeka No. 7", "081234567896", "3201010707070007", "pindah"],
   ];
 
   const insertWarga = database.prepare(
-    "INSERT INTO warga (nama, alamat, no_hp, status, created_at) VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO warga (nama, alamat, no_hp, no_ktp, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
   );
   for (const w of warga) {
     insertWarga.run(...w, now);
@@ -303,11 +309,27 @@ export function getWarga(): Warga[] {
   return getDb().prepare("SELECT * FROM warga ORDER BY nama ASC").all() as Warga[];
 }
 
+export function normalizeKtp(noKtp: string): string {
+  return noKtp.replace(/\D/g, "");
+}
+
+export function findWargaByKtp(noKtp: string): Warga | null {
+  const normalized = normalizeKtp(noKtp);
+  if (!normalized) return null;
+
+  const warga = getWarga();
+  return (
+    warga.find(
+      (w) => w.status === "aktif" && normalizeKtp(w.no_ktp) === normalized && w.no_ktp.trim() !== ""
+    ) ?? null
+  );
+}
+
 export function addWarga(data: Omit<Warga, "id" | "created_at">): Warga {
   const now = new Date().toISOString();
   const result = getDb().prepare(
-    "INSERT INTO warga (nama, alamat, no_hp, status, created_at) VALUES (?, ?, ?, ?, ?)"
-  ).run(data.nama, data.alamat, data.no_hp, data.status, now);
+    "INSERT INTO warga (nama, alamat, no_hp, no_ktp, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(data.nama, data.alamat, data.no_hp, data.no_ktp ?? "", data.status, now);
 
   return getDb().prepare("SELECT * FROM warga WHERE id = ?").get(result.lastInsertRowid) as Warga;
 }
@@ -318,9 +340,9 @@ export function updateWarga(id: number, data: Partial<Omit<Warga, "id" | "create
 
   const updated = { ...current, ...data };
   getDb().prepare(`
-    UPDATE warga SET nama = ?, alamat = ?, no_hp = ?, status = ?
+    UPDATE warga SET nama = ?, alamat = ?, no_hp = ?, no_ktp = ?, status = ?
     WHERE id = ?
-  `).run(updated.nama, updated.alamat, updated.no_hp, updated.status, id);
+  `).run(updated.nama, updated.alamat, updated.no_hp, updated.no_ktp ?? "", updated.status, id);
 
   return getDb().prepare("SELECT * FROM warga WHERE id = ?").get(id) as Warga;
 }
@@ -412,7 +434,7 @@ export function getDashboard(): DashboardData {
   const pengeluaran = getDb().prepare("SELECT COALESCE(SUM(jumlah), 0) as total FROM keuangan WHERE jenis = 'pengeluaran'").get() as { total: number };
   const kegiatanAktif = getDb().prepare("SELECT COUNT(*) as c FROM kegiatan WHERE status IN ('rencana', 'berlangsung')").get() as { c: number };
   const kegiatanTerbaru = getDb().prepare("SELECT * FROM kegiatan ORDER BY tanggal DESC LIMIT 3").all() as Kegiatan[];
-  const transaksiTerbaru = getDb().prepare("SELECT * FROM keuangan ORDER BY tanggal DESC, id DESC LIMIT 2").all() as TransaksiKeuangan[];
+  const transaksiTerbaru = getDb().prepare("SELECT * FROM keuangan ORDER BY tanggal DESC, id DESC LIMIT 4").all() as TransaksiKeuangan[];
 
   return {
     profil,

@@ -5,7 +5,11 @@ import { isAdminAuthenticated } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(getWarga());
+  const warga = getWarga();
+  if (await isAdminAuthenticated()) {
+    return NextResponse.json(warga);
+  }
+  return NextResponse.json(warga.map(({ no_ktp: _, ...rest }) => rest));
 }
 
 export async function POST(request: Request) {

@@ -22,12 +22,12 @@ import {
 } from "lucide-react";
 import AdminKeuanganGate from "./AdminKeuanganGate";
 import { StatCard } from "@/components/StatCard";
-import { formatRupiah, formatTanggal } from "@/lib/format";
+import { formatRupiah, formatTanggal, formatTanggalWaktu } from "@/lib/format";
 import type { KeuanganResponse } from "@/lib/keuangan";
 import { formatFileSize, MAX_FOTO_SIZE } from "@/lib/upload";
-import type { ProfilRT, Kegiatan, KegiatanFoto, Warga, TransaksiKeuangan } from "@/lib/types";
+import type { ProfilRT, Kegiatan, KegiatanFoto, Warga, TransaksiKeuangan, KeuanganAksesLog } from "@/lib/types";
 
-type Tab = "profil" | "kegiatan" | "warga" | "keuangan";
+type Tab = "profil" | "kegiatan" | "warga" | "keuangan" | "log";
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -153,6 +153,7 @@ export default function AdminPage() {
     { id: "kegiatan", label: "Kegiatan" },
     { id: "warga", label: "Warga" },
     { id: "keuangan", label: "Keuangan" },
+    { id: "log", label: "Log" },
   ];
 
   return (
@@ -189,6 +190,77 @@ export default function AdminPage() {
       {tab === "kegiatan" && <KegiatanForm />}
       {tab === "warga" && <WargaForm />}
       {tab === "keuangan" && <KeuanganAdminSection />}
+      {tab === "log" && <KeuanganAksesLogSection />}
+    </div>
+  );
+}
+
+function KeuanganAksesLogSection() {
+  const [logs, setLogs] = useState<KeuanganAksesLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function load() {
+    setLoading(true);
+    const res = await fetch("/api/admin/keuangan/akses-log");
+    if (res.ok) {
+      setLogs(await res.json());
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  if (loading) {
+    return <div className="animate-pulse h-64 bg-slate-200 rounded-2xl" />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Log Akses Laporan Keuangan</h2>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Daftar warga yang memverifikasi NIK untuk melihat laporan keuangan
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={load}
+          className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50"
+        >
+          Muat ulang
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">No</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Waktu</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Nama</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">NIK</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {logs.map((log, i) => (
+                <tr key={log.id} className="hover:bg-slate-50">
+                  <td className="px-6 py-3 text-slate-500">{i + 1}</td>
+                  <td className="px-6 py-3 text-slate-600 whitespace-nowrap">{formatTanggalWaktu(log.accessed_at)}</td>
+                  <td className="px-6 py-3 font-medium text-slate-900">{log.nama_warga}</td>
+                  <td className="px-6 py-3 text-slate-600 font-mono">{log.no_ktp}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {logs.length === 0 && (
+          <p className="text-center text-slate-500 py-12">Belum ada riwayat akses laporan keuangan.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -563,8 +635,8 @@ function KegiatanAdminItem({
 function WargaForm() {
   const [items, setItems] = useState<Warga[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ nama: "", alamat: "", no_hp: "", status: "aktif" as Warga["status"] });
-  const [form, setForm] = useState({ nama: "", alamat: "", no_hp: "", status: "aktif" as const });
+  const [editForm, setEditForm] = useState({ nama: "", alamat: "", no_hp: "", no_ktp: "", status: "aktif" as Warga["status"] });
+  const [form, setForm] = useState({ nama: "", alamat: "", no_hp: "", no_ktp: "", status: "aktif" as const });
   const [saved, setSaved] = useState(false);
 
   async function load() {
@@ -581,13 +653,13 @@ function WargaForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    setForm({ nama: "", alamat: "", no_hp: "", status: "aktif" });
+    setForm({ nama: "", alamat: "", no_hp: "", no_ktp: "", status: "aktif" });
     load();
   }
 
   function startEdit(w: Warga) {
     setEditingId(w.id);
-    setEditForm({ nama: w.nama, alamat: w.alamat, no_hp: w.no_hp, status: w.status });
+    setEditForm({ nama: w.nama, alamat: w.alamat, no_hp: w.no_hp, no_ktp: w.no_ktp ?? "", status: w.status });
     setSaved(false);
   }
 
@@ -619,7 +691,8 @@ function WargaForm() {
       <form onSubmit={handleAdd} className="bg-white rounded-2xl border border-slate-200 p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input placeholder="Nama lengkap" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200" required />
         <input placeholder="No. HP" value={form.no_hp} onChange={(e) => setForm({ ...form, no_hp: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200" required />
-        <input placeholder="Alamat" value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} className="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-200" required />
+        <input placeholder="No. KTP" value={form.no_ktp} onChange={(e) => setForm({ ...form, no_ktp: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200" required />
+        <input placeholder="Alamat" value={form.alamat} onChange={(e) => setForm({ ...form, alamat: e.target.value })} className="px-3 py-2 rounded-xl border border-slate-200" required />
         <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as "aktif" })} className="px-3 py-2 rounded-xl border border-slate-200">
           <option value="aktif">Aktif</option>
           <option value="pindah">Pindah</option>
@@ -635,6 +708,7 @@ function WargaForm() {
             <div key={w.id} className="bg-white rounded-xl border border-emerald-200 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input value={editForm.nama} onChange={(e) => setEditForm({ ...editForm, nama: e.target.value })} placeholder="Nama" className="px-3 py-2 rounded-xl border border-slate-200" />
               <input value={editForm.no_hp} onChange={(e) => setEditForm({ ...editForm, no_hp: e.target.value })} placeholder="No. HP" className="px-3 py-2 rounded-xl border border-slate-200" />
+              <input value={editForm.no_ktp} onChange={(e) => setEditForm({ ...editForm, no_ktp: e.target.value })} placeholder="No. KTP" className="px-3 py-2 rounded-xl border border-slate-200" />
               <input value={editForm.alamat} onChange={(e) => setEditForm({ ...editForm, alamat: e.target.value })} placeholder="Alamat" className="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-200" />
               <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as Warga["status"] })} className="px-3 py-2 rounded-xl border border-slate-200">
                 <option value="aktif">Aktif</option>
@@ -653,7 +727,7 @@ function WargaForm() {
             <div key={w.id} className="flex items-center justify-between bg-white rounded-xl border border-slate-200 px-4 py-3">
               <div>
                 <p className="font-medium">{w.nama}</p>
-                <p className="text-sm text-slate-500">{w.alamat} · {w.no_hp} · {w.status}</p>
+                <p className="text-sm text-slate-500">{w.alamat} · {w.no_hp} · KTP {w.no_ktp || "-"} · {w.status}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button type="button" onClick={() => startEdit(w)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg">

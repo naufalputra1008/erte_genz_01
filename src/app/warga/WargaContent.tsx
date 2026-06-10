@@ -5,17 +5,19 @@ import { Search, MapPin, Phone } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { PageHeader } from "@/components/PageHeader";
+import { PageShell } from "@/components/PageShell";
 import { splitNamaBelakang } from "@/lib/format";
-import type { Warga, ProfilRT } from "@/lib/types";
+import { card, filterActive, filterInactive, input } from "@/lib/ui";
+import type { WargaPublic, ProfilRT } from "@/lib/types";
 
 export default function WargaContent({
   initialWarga,
   initialProfil,
 }: {
-  initialWarga: Warga[];
+  initialWarga: WargaPublic[];
   initialProfil: ProfilRT;
 }) {
-  const { data, loading, refreshing, lastUpdated, refresh } = useLiveData<Warga[]>("/api/warga", {
+  const { data, loading, refreshing, lastUpdated, refresh } = useLiveData<WargaPublic[]>("/api/warga", {
     initialData: initialWarga,
   });
   const { data: profil } = useLiveData<ProfilRT>("/api/profil", { initialData: initialProfil });
@@ -33,12 +35,12 @@ export default function WargaContent({
   const aktifCount = data?.filter((w) => w.status === "aktif").length ?? 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <PageShell>
       <PageHeader
         title={`Data Warga ${profil?.nama_rt ?? "RT 01 Taman Balaraja"}`}
         description={`${aktifCount} warga aktif terdaftar — data diperbarui secara live`}
       >
-        <LiveIndicator lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
+        <LiveIndicator lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} variant="blue" />
       </PageHeader>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -49,7 +51,7 @@ export default function WargaContent({
             placeholder="Cari nama atau alamat..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className={`${input} pl-10`}
           />
         </div>
         <div className="flex gap-2">
@@ -58,9 +60,7 @@ export default function WargaContent({
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                filter === f
-                  ? "bg-emerald-600 text-white"
-                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                filter === f ? filterActive : filterInactive
               }`}
             >
               {f === "all" ? "Semua" : f === "aktif" ? "Aktif" : "Pindah"}
@@ -76,11 +76,11 @@ export default function WargaContent({
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className={`${card} overflow-hidden`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
+                <tr className="bg-slate-50 border-b border-[var(--rt-border)]">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">No</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Nama</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Alamat</th>
@@ -123,7 +123,7 @@ export default function WargaContent({
                     </td>
                     <td className="px-6 py-4">
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        w.status === "aktif" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"
+                        w.status === "aktif" ? "bg-blue-100 text-[#004ac6]" : "bg-slate-100 text-slate-500"
                       }`}>
                         {w.status === "aktif" ? "Aktif" : "Pindah"}
                       </span>
@@ -139,6 +139,6 @@ export default function WargaContent({
           )}
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
