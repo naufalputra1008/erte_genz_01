@@ -108,9 +108,11 @@ export default function WargaContent({
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1.5" title="Alamat dirahasiakan">
                         <MapPin className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                        {w.alamat}
+                        <span className="blur-[5px] select-none pointer-events-none" aria-hidden="true">
+                          {w.alamat}
+                        </span>
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
