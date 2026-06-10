@@ -313,6 +313,20 @@ export function normalizeKtp(noKtp: string): string {
   return noKtp.replace(/\D/g, "");
 }
 
+export function normalizeNama(nama: string): string {
+  return nama.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+export function findWargaByNama(nama: string): Warga | null {
+  const normalized = normalizeNama(nama);
+  if (!normalized) return null;
+
+  const warga = getWarga();
+  return (
+    warga.find((w) => w.status === "aktif" && normalizeNama(w.nama) === normalized) ?? null
+  );
+}
+
 export function findWargaByKtp(noKtp: string): Warga | null {
   const normalized = normalizeKtp(noKtp);
   if (!normalized) return null;

@@ -222,7 +222,7 @@ function KeuanganAksesLogSection() {
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Log Akses Laporan Keuangan</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Daftar warga yang memverifikasi NIK untuk melihat laporan keuangan
+            Daftar warga yang memverifikasi nama lengkap untuk melihat laporan keuangan
           </p>
         </div>
         <button
@@ -242,7 +242,6 @@ function KeuanganAksesLogSection() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">No</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Waktu</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Nama</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">NIK</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -251,7 +250,6 @@ function KeuanganAksesLogSection() {
                   <td className="px-6 py-3 text-slate-500">{i + 1}</td>
                   <td className="px-6 py-3 text-slate-600 whitespace-nowrap">{formatTanggalWaktu(log.accessed_at)}</td>
                   <td className="px-6 py-3 font-medium text-slate-900">{log.nama_warga}</td>
-                  <td className="px-6 py-3 text-slate-600 font-mono">{log.no_ktp}</td>
                 </tr>
               ))}
             </tbody>

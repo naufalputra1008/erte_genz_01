@@ -6,7 +6,7 @@ import {
   cleanupExpiredSessions,
   logKeuanganAkses,
 } from "./auth-store";
-import { findWargaByKtp, normalizeKtp } from "./db";
+import { findWargaByNama, normalizeNama } from "./db";
 
 const WARGA_KEUANGAN_COOKIE = "rt_warga_keuangan";
 const WARGA_KEUANGAN_SESSION_SECONDS = 60 * 60 * 3;
@@ -19,13 +19,13 @@ export async function isWargaKeuanganAccessGranted(): Promise<boolean> {
   return validateWargaKeuanganSession(sessionId);
 }
 
-export async function verifyAndGrantWargaKeuanganAccess(noKtp: string): Promise<boolean> {
-  const warga = findWargaByKtp(noKtp);
+export async function verifyAndGrantWargaKeuanganAccess(nama: string): Promise<boolean> {
+  const warga = findWargaByNama(nama);
   if (!warga) return false;
 
-  const normalizedKtp = normalizeKtp(noKtp);
-  const { id } = createWargaKeuanganSession(warga.id, normalizedKtp);
-  logKeuanganAkses(warga.id, normalizedKtp, warga.nama, id);
+  const normalizedNama = normalizeNama(nama);
+  const { id } = createWargaKeuanganSession(warga.id, normalizedNama);
+  logKeuanganAkses(warga.id, normalizedNama, warga.nama, id);
 
   const cookieStore = await cookies();
   cookieStore.set(WARGA_KEUANGAN_COOKIE, id, {

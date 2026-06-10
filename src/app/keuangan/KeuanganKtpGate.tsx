@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard } from "lucide-react";
+import { User } from "lucide-react";
 import { btnPrimary, card, input } from "@/lib/ui";
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function KeuanganKtpGate({ onUnlocked }: Props) {
-  const [noKtp, setNoKtp] = useState("");
+  const [nama, setNama] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,17 +21,17 @@ export default function KeuanganKtpGate({ onUnlocked }: Props) {
     const res = await fetch("/api/keuangan/warga-access", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ no_ktp: noKtp }),
+      body: JSON.stringify({ nama }),
     });
 
     const data = await res.json();
     setLoading(false);
 
     if (res.ok) {
-      setNoKtp("");
+      setNama("");
       onUnlocked();
     } else {
-      setError(data.error || "No. KTP tidak valid");
+      setError(data.error || "Nama tidak valid");
     }
   }
 
@@ -40,23 +40,22 @@ export default function KeuanganKtpGate({ onUnlocked }: Props) {
       <div className={`${card} p-8`}>
         <div className="text-center mb-6">
           <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-            <CreditCard className="h-7 w-7 text-[#004ac6]" />
+            <User className="h-7 w-7 text-[#004ac6]" />
           </div>
           <h2 className="text-xl font-bold text-slate-900">Akses Data Keuangan</h2>
           <p className="text-slate-500 mt-1 text-sm">
-            Masukkan NIK (No. KTP) yang terdaftar di data warga RT. Akses berlaku 3 jam.
+            Masukkan nama lengkap yang terdaftar di data warga RT. Akses berlaku 3 jam.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">NIK (No. KTP)</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Nama Lengkap</label>
             <input
               type="text"
-              inputMode="numeric"
-              value={noKtp}
-              onChange={(e) => setNoKtp(e.target.value)}
-              placeholder="16 digit NIK"
+              value={nama}
+              onChange={(e) => setNama(e.target.value)}
+              placeholder="Contoh: Budi Santoso"
               className={input}
               required
               autoFocus

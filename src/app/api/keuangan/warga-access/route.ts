@@ -13,16 +13,16 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { no_ktp } = await request.json();
+  const { nama } = await request.json();
 
-  if (!no_ktp || typeof no_ktp !== "string" || !no_ktp.trim()) {
-    return NextResponse.json({ error: "No. KTP wajib diisi" }, { status: 400 });
+  if (!nama || typeof nama !== "string" || !nama.trim()) {
+    return NextResponse.json({ error: "Nama lengkap wajib diisi" }, { status: 400 });
   }
 
-  const granted = await verifyAndGrantWargaKeuanganAccess(no_ktp);
+  const granted = await verifyAndGrantWargaKeuanganAccess(nama);
   if (!granted) {
     return NextResponse.json(
-      { error: "No. KTP tidak terdaftar atau warga tidak aktif" },
+      { error: "Nama tidak terdaftar atau warga tidak aktif" },
       { status: 401 }
     );
   }

@@ -11,7 +11,7 @@ export async function GET() {
   const wargaAccess = await isWargaKeuanganAccessGranted();
 
   if (!admin && !wargaAccess) {
-    return NextResponse.json({ error: "Verifikasi No. KTP diperlukan" }, { status: 403 });
+    return NextResponse.json({ error: "Verifikasi nama lengkap diperlukan" }, { status: 403 });
   }
 
   return NextResponse.json(buildKeuanganResponse(getKeuangan()));
