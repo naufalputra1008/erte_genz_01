@@ -49,11 +49,27 @@ export function getEnvValue(key: string): string | null {
   return value || null;
 }
 
+export function getAdminAccounts(): { email: string; passwordHash: string }[] {
+  const pairs: [string, string][] = [
+    ["ADMIN_EMAIL", "ADMIN_PASSWORD_HASH"],
+    ["ADMIN_EMAIL_2", "ADMIN_PASSWORD_HASH_2"],
+  ];
+
+  const accounts: { email: string; passwordHash: string }[] = [];
+
+  for (const [emailKey, hashKey] of pairs) {
+    const email = getEnvValue(emailKey);
+    const passwordHash = getEnvValue(hashKey);
+    if (email && passwordHash) {
+      accounts.push({ email: email.toLowerCase(), passwordHash });
+    }
+  }
+
+  return accounts;
+}
+
 export function getAdminEnv(): { email: string; passwordHash: string } | null {
-  const email = getEnvValue("ADMIN_EMAIL");
-  const passwordHash = getEnvValue("ADMIN_PASSWORD_HASH");
-  if (!email || !passwordHash) return null;
-  return { email: email.toLowerCase(), passwordHash };
+  return getAdminAccounts()[0] ?? null;
 }
 
 export function getKeuanganPasswordHash(): string | null {

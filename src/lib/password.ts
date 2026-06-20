@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { getAdminEnv } from "./admin-env";
+import { getAdminAccounts } from "./admin-env";
 
 export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 10);
@@ -10,16 +10,16 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 export function getAdminCredentials(): { email: string; passwordHash: string } | null {
-  return getAdminEnv();
+  return getAdminAccounts()[0] ?? null;
 }
 
 export function isAdminConfigured(): boolean {
-  return getAdminCredentials() !== null;
+  return getAdminAccounts().length > 0;
 }
 
 export function verifyAdminCredentials(email: string, password: string): boolean {
-  const admin = getAdminCredentials();
+  const normalizedEmail = email.toLowerCase();
+  const admin = getAdminAccounts().find((account) => account.email === normalizedEmail);
   if (!admin) return false;
-  if (email.toLowerCase() !== admin.email) return false;
   return verifyPassword(password, admin.passwordHash);
 }
