@@ -856,7 +856,7 @@ function KeuanganForm() {
     load();
   }
 
-  async function downloadCsv(url: string, filename: string) {
+  async function downloadFile(url: string, filename: string) {
     const res = await fetch(url);
     if (!res.ok) return;
     const blob = await res.blob();
@@ -866,6 +866,17 @@ function KeuanganForm() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(blobUrl);
+  }
+
+  async function downloadCsv(url: string, filename: string) {
+    await downloadFile(url, filename);
+  }
+
+  async function handleDownloadLaporan() {
+    await downloadFile(
+      "/api/admin/keuangan/laporan",
+      `laporan-keuangan-${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   }
 
   async function handleDownloadAddTemplate() {
@@ -946,7 +957,24 @@ function KeuanganForm() {
   return (
     <div className="space-y-6">
       {ringkasan && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-slate-900">Ringkasan Keuangan</h3>
+              <p className="text-sm text-slate-500">
+                Unduh laporan lengkap berisi ringkasan, detail pemasukan, dan detail pengeluaran.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleDownloadLaporan}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#004ac6] text-white rounded-xl text-sm font-semibold hover:bg-[#2563eb] transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Download Laporan Keuangan
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard
             title="Total Pemasukan"
             value={formatRupiah(ringkasan.pemasukan)}
@@ -967,6 +995,7 @@ function KeuanganForm() {
             icon={Wallet}
             color="amber"
           />
+          </div>
         </div>
       )}
 
